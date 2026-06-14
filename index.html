@@ -17,7 +17,7 @@
     <div id="screen-login" class="flex flex-col items-center justify-center h-full space-y-6 p-4">
         <div class="bg-white text-slate-800 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border-4 border-yellow-400">
             <h1 class="text-4xl font-bold text-indigo-600 mb-2">🍎 Sound Basket 🧺</h1>
-            <p class="text-gray-500 mb-6 font-medium">ผจญภัยเคลื่อนที่อิสระคุมด้วยหัว</p>
+            <p class="text-gray-500 mb-6 font-medium">ตะกร้าผลไม้ใส่คำศัพท์</p>
             
             <div class="space-y-4 text-left">
                 <label class="block text-gray-700 font-semibold">ชื่อนักเรียน:</label>
@@ -156,7 +156,6 @@
     </div>
 
     <script>
-        // --- 📚 อัปเดตคลังคำศัพท์ Phonics ให้เยอะขึ้นและหลากหลายขึ้นมาก ---
         const GameData = {
             islands: [
                 {
@@ -164,14 +163,12 @@
                     targetSound: "b",
                     soundLabel: "/b/",
                     words: [
-                        // คำศัพท์ที่ถูกต้อง (ขึ้นต้นด้วย B)
                         { text: "bat", isCorrect: true }, { text: "ball", isCorrect: true },
                         { text: "bug", isCorrect: true }, { text: "bear", isCorrect: true },
                         { text: "bus", isCorrect: true }, { text: "bed", isCorrect: true },
                         { text: "box", isCorrect: true }, { text: "book", isCorrect: true },
                         { text: "bell", isCorrect: true }, { text: "bird", isCorrect: true },
                         { text: "baby", isCorrect: true }, { text: "banana", isCorrect: true },
-                        // คำศัพท์หลอก (ขึ้นต้นด้วยอักษรอื่น)
                         { text: "cat", isCorrect: false }, { text: "dog", isCorrect: false },
                         { text: "sun", isCorrect: false }, { text: "pig", isCorrect: false },
                         { text: "fox", isCorrect: false }, { text: "hat", isCorrect: false },
@@ -184,14 +181,12 @@
                     targetSound: "short_a",
                     soundLabel: "/æ/ (Short A)",
                     words: [
-                        // คำศัพท์ที่ถูกต้อง (สระเสียงสั้น แอะ/แอ)
                         { text: "cat", isCorrect: true }, { text: "man", isCorrect: true },
                         { text: "bag", isCorrect: true }, { text: "hat", isCorrect: true },
                         { text: "fan", isCorrect: true }, { text: "map", isCorrect: true },
                         { text: "pan", isCorrect: true }, { text: "rat", isCorrect: true },
                         { text: "van", isCorrect: true }, { text: "jam", isCorrect: true },
                         { text: "sad", isCorrect: true }, { text: "dad", isCorrect: true },
-                        // คำศัพท์หลอก (เสียงสระสั้นตัวอื่น e, i, o, u)
                         { text: "pin", isCorrect: false }, { text: "hot", isCorrect: false },
                         { text: "bed", isCorrect: false }, { text: "bug", isCorrect: false },
                         { text: "dig", isCorrect: false }, { text: "fox", isCorrect: false },
@@ -204,14 +199,12 @@
                     targetSound: "sh",
                     soundLabel: "/ʃ/ (sh)",
                     words: [
-                        // คำศัพท์ที่ถูกต้อง (มีเสียง sh ทั้งหน้าและหลัง)
                         { text: "ship", isCorrect: true }, { text: "fish", isCorrect: true },
                         { text: "shop", isCorrect: true }, { text: "shell", isCorrect: true },
                         { text: "shoe", isCorrect: true }, { text: "dish", isCorrect: true },
                         { text: "wash", isCorrect: true }, { text: "shirt", isCorrect: true },
                         { text: "shark", isCorrect: true }, { text: "sheep", isCorrect: true },
                         { text: "shout", isCorrect: true }, { text: "brush", isCorrect: true },
-                        // คำศัพท์หลอก (เสียงควบ/ประสมตัวอื่น ch, th, ng)
                         { text: "chin", isCorrect: false }, { text: "sing", isCorrect: false },
                         { text: "chair", isCorrect: false }, { text: "thin", isCorrect: false },
                         { text: "this", isCorrect: false }, { text: "chop", isCorrect: false },
@@ -226,6 +219,9 @@
                 { name: "Hard", speed: 4.5 }
             ]
         };
+
+        // อาเรย์เก็บสีแบบสุ่มสำหรับพรางตาคำตอบ (ส้ม, แดง, เขียว, ฟ้า, ชมพู)
+        const fruitColors = ["#f97316", "#ef4444", "#22c55e", "#06b6d4", "#ec4899"];
 
         let currentStudent = "";
         let currentIslandIndex = 0;
@@ -448,6 +444,9 @@
                 const activeIsland = GameData.islands[currentIslandIndex];
                 const randomWordObj = activeIsland.words[Math.floor(Math.random() * activeIsland.words.length)];
                 const isGolden = Math.random() < 0.15;
+                
+                // สุ่มสีพรางตาจากกล่องสีที่เตรียมไว้
+                const randomVisualColor = fruitColors[Math.floor(Math.random() * fruitColors.length)];
 
                 fallingItems.push({
                     x: Math.random() * (width - 120) + 60,
@@ -455,6 +454,7 @@
                     text: randomWordObj.text,
                     isCorrect: randomWordObj.isCorrect,
                     isGolden: isGolden,
+                    color: randomVisualColor, // ผูกสีที่ได้จากการสุ่มพรางตา
                     radius: 45
                 });
             }
@@ -465,7 +465,10 @@
 
                 ctx.beginPath();
                 ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
-                ctx.fillStyle = item.isGolden ? "#fbbf24" : (item.isCorrect ? "#ef4444" : "#3b82f6");
+                
+                // ตรรกะลงสีใหม่: ถ้าเป็นลูกทองจะแสดงสีเหลืองทองเหมือนเดิม แต่ถ้าเป็นลูกปกติจะใช้สีที่สุ่มพรางตาปะปนกัน (ไม่แบ่งแยกถูกผิดแล้ว)
+                ctx.fillStyle = item.isGolden ? "#fbbf24" : item.color;
+                
                 ctx.fill();
                 ctx.lineWidth = 3;
                 ctx.strokeStyle = "#fff";
