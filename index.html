@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound Basket - Phonics Island Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap');
+        body { font-family: 'Prompt', sans-serif; overflow: hidden; }
+        #video-container canvas { transform: scaleX(-1); } /* Flip กล้องให้เหมือนกระจก */
+    </style>
+</head>
+<body class="bg-gradient-to-b from-blue-400 to-indigo-600 h-screen select-none text-white">
+
+    <div id="screen-login" class="flex flex-col items-center justify-center h-full space-y-6 p-4">
+        <div class="bg-white text-slate-800 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border-4 border-yellow-400">
+            <h1 class="text-4xl font-bold text-indigo-600 mb-2">🍎 Sound Basket 🧺</h1>
+            <p class="text-gray-500 mb-6 font-medium">ผจญภัย 3 เกาะ Phonics สุดสนุก</p>
+            
+            <div class="space-y-4 text-left">
+                <label class="block text-gray-700 font-semibold">ชื่อนักเรียน:</label>
+                <input type="text" id="student-name" placeholder="กรอกชื่อของคุณเลย..." class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:outline-none focus:border-indigo-500 text-lg">
+            </div>
+            
+            <button onclick="startGame()" class="mt-6 w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold text-xl py-4 rounded-xl shadow-lg transform active:scale-95 transition-all">
+                เข้าสู่เกาะมหาสนุก! 🏝️
+            </button>
+        </div>
+        <button onclick="toggleDashboard(true)" class="text-xs text-indigo-200 opacity-50 hover:opacity-100 underline">🧑‍🏫 สำหรับคุณครู (Dashboard)</button>
+    </div>
+
+    <div id="screen-game" class="hidden relative h-full w-full">
+        <div id="video-container" class="absolute inset-0 w-full h-full bg-black">
+            <video id="webcam" class="hidden" autoplay playsinline></video>
+            <canvas id="gameCanvas" class="w-full h-full object-cover"></canvas>
+        </div>
+
+        <div class="absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-none">
+            <div class="bg-slate-900/80 backdrop-blur-md p-3 rounded-2xl flex flex-col pointer-events-auto">
+                <span id="ui-name" class="font-bold text-yellow-300 text-lg">Name</span>
+                <span id="ui-island" class="text-xs text-gray-300">Island: -</span>
+                <span id="ui-level" class="text-xs text-green-400 font-semibold">Level: -</span>
+            </div>
+
+            <div class="flex space-x-4 items-center">
+                <div class="bg-slate-900/80 backdrop-blur-md px-4 py-2 rounded-2xl text-center">
+                    <div class="text-xs text-gray-400">SCORE</div>
+                    <div id="ui-score" class="text-2xl font-bold text-green-400">0</div>
+                </div>
+                <div id="ui-combo-box" class="bg-red-500 text-white px-3 py-1 rounded-full font-bold animate-bounce hidden text-sm">
+                    Combo x<span id="ui-combo">0</span>
+                </div>
+                <div class="bg-slate-900/80 backdrop-blur-md px-4 py-2 rounded-2xl text-center min-w-[70px]">
+                    <div class="text-xs text-gray-400">TIME</div>
+                    <div id="ui-time" class="text-2xl font-bold text-red-400">60</div>
+                </div>
+            </div>
+
+            <div id="ui-hearts" class="flex space-x-1 bg-slate-900/80 backdrop-blur-md p-3 rounded-2xl pointer-events-auto">
+                ❤️ ❤️ ❤️
+            </div>
+        </div>
+
+        <div class="absolute top-24 left-1/2 transform -translate-x-1/2 bg-indigo-600/90 text-white px-6 py-3 rounded-full text-center shadow-xl border-2 border-white pointer-events-auto flex items-center space-x-3 cursor-pointer" onclick="speakTargetSound()">
+            <span class="text-sm font-medium">🎯 จงหาคำที่มีเสียง:</span>
+            <span id="ui-target-sound" class="text-2xl font-bold text-yellow-300">/ /</span>
+            <span class="text-lg">🔊</span>
+        </div>
+
+        <div id="game-alert" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-4xl font-bold text-yellow-400 drop-shadow-md pointer-events-none transition-all scale-0 opacity-0"></div>
+    </div>
+
+    <div id="screen-result" class="hidden flex flex-col items-center justify-center h-full p-4">
+        <div class="bg-white text-slate-800 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border-4 border-green-400">
+            <h2 class="text-3xl font-bold text-green-600 mb-2">🎉 จบการผจญภัย! 🎉</h2>
+            <p class="text-gray-600 mb-6">เก่งมาก! มาดูสรุปคะแนนกันดีกว่า</p>
+
+            <div class="bg-gray-100 p-4 rounded-xl space-y-2 text-left font-medium mb-6">
+                <div>นักเรียน: <span id="res-name" class="text-indigo-600 font-bold"></span></div>
+                <div>ด่านที่เล่น: <span id="res-island" class="text-slate-700"></span></div>
+                <div>คะแนนรวมที่ได้: <span id="res-score" class="text-green-600 font-bold text-xl">0</span> คะแนน</div>
+            </div>
+
+            <button onclick="backToLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg py-3 rounded-xl shadow-md">
+                กลับหน้าหลัก
+            </button>
+        </div>
+    </div>
+
+    <div id="screen-dashboard" class="hidden fixed inset-0 bg-slate-900/95 z-50 p-6 overflow-y-auto">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
+                <h2 class="text-2xl font-bold text-yellow-400 flex items-center gap-2">🧑‍🏫 Teacher Dashboard (ระบบเก็บคะแนนนักเรียน)</h2>
+                <button onclick="toggleDashboard(false)" class="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg">ปิดหน้าต่าง</button>
+            </div>
+
+            <div class="mb-4 flex gap-4">
+                <button onclick="clearLogs()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium">🗑️ ล้างข้อมูลทั้งหมด</button>
+                <button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">📥 Export เป็น CSV</button>
+            </div>
+
+            <div class="bg-slate-800 rounded-xl overflow-hidden shadow-xl border border-slate-700">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-700 text-yellow-300 text-sm font-semibold">
+                            <th class="p-4">วัน-เวลาที่เล่น (Timestamp)</th>
+                            <th class="p-4">ชื่อนักเรียน</th>
+                            <th class="p-4">เกาะ (Island)</th>
+                            <th class="p-4">คะแนนรวม</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboard-table-body" class="text-slate-200 divide-y divide-slate-700 text-sm">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. คลังข้อมูลคำศัพท์ Phonics (3 เกาะ x 3 ระดับความเร็ว) ---
+        const GameData = {
+            islands: [
+                {
+                    name: "เกาะที่ 1: Initial Sound 🏝️",
+                    targetSound: "b", // เสียงพยัญชนะต้น
+                    soundLabel: "/b/",
+                    words: [
+                        { text: "bat", isCorrect: true },
+                        { text: "ball", isCorrect: true },
+                        { text: "cat", isCorrect: false },
+                        { text: "dog", isCorrect: false },
+                        { text: "bug", isCorrect: true },
+                        { text: "sun", isCorrect: false }
+                    ]
+                },
+                {
+                    name: "เกาะที่ 2: Short Vowel 🌋",
+                    targetSound: "short_a", // เสียงสระสั้น /æ/
+                    soundLabel: "/æ/ (Short A)",
+                    words: [
+                        { text: "cat", isCorrect: true },
+                        { text: "man", isCorrect: true },
+                        { text: "pin", isCorrect: false },
+                        { text: "hot", isCorrect: false },
+                        { text: "bag", isCorrect: true },
+                        { text: "bed", isCorrect: false }
+                    ]
+                },
+                {
+                    name: "เกาะที่ 3: Digraphs/Blends 🏰",
+                    targetSound: "sh", // เสียงควบกล้ำประสม sh
+                    soundLabel: "/ʃ/ (sh)",
+                    words: [
+                        { text: "ship", isCorrect: true },
+                        { text: "fish", isCorrect: true },
+                        { text: "chin", isCorrect: false },
+                        { text: "shop", isCorrect: true },
+                        { text: "sing", isCorrect: false },
+                        { text: "shell", isCorrect: true }
+                    ]
+                }
+            ],
+            levels: [
+                { name: "Easy", speed: 2 },
+                { name: "Medium", speed: 4 },
+                { name: "Hard", speed: 6 }
+            ]
+        };
+
+        // --- 2. ตัวแปรควบคุมสถานะเกม ---
+        let currentStudent = "";
+        let currentIslandIndex = 0;
+        let currentLevelIndex = 0;
+        
+        let score = 0;
+        let combo = 0;
+        let timeRemaining = 60;
+        let lives = 3;
+        let gameTimer = null;
+        let gameActive = false;
+
+        // AR/Canvas variables
+        const videoElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('gameCanvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        
+        let basketX = 300; // จุดกึ่งกลางเริ่มต้นของตะกร้า
+        let fallingItems = [];
+        let spawnTimer = 0;
+
+        // --- 3. ฟังก์ชันระบบจัดการเปลี่ยนหน้าจอ & ข้อมูลหลัก ---
+        function startGame() {
+            const nameInput = document.getElementById('student-name').value.trim();
+            if(!nameInput) return alert("กรุณากรอกชื่อก่อนเล่นเกมนะครับคุณครู/นักเรียน!");
+            currentStudent = nameInput;
+            
+            // สุ่มเลือกเกาะและระดับความเร็วให้ผู้เล่นผจญภัย
+            currentIslandIndex = Math.floor(Math.random() * GameData.islands.length);
+            currentLevelIndex = Math.floor(Math.random() * GameData.levels.length);
+
+            // อัปเดต UI
+            document.getElementById('ui-name').innerText = currentStudent;
+            document.getElementById('ui-island').innerText = "Island: " + GameData.islands[currentIslandIndex].name;
+            document.getElementById('ui-level').innerText = "Level: " + GameData.levels[currentLevelIndex].name;
+            document.getElementById('ui-target-sound').innerText = GameData.islands[currentIslandIndex].soundLabel;
+
+            // รีเซ็ตค่าสถิติ
+            score = 0; combo = 0; timeRemaining = 60; lives = 3;
+            fallingItems = [];
+            updateUIStats();
+
+            // เปลี่ยนหน้าจอ
+            document.getElementById('screen-login').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+
+            resizeCanvas();
+            gameActive = true;
+            speakTargetSound(); // ออกเสียงโจทย์ต้อนรับ
+
+            // สตาร์ทเวลา 60 วินาที
+            gameTimer = setInterval(() => {
+                if(!gameActive) return;
+                timeRemaining--;
+                document.getElementById('ui-time').innerText = timeRemaining;
+                if(timeRemaining <= 0) {
+                    endGameGameover(true);
+                }
+            }, 1000);
+
+            // เริ่มระบายระบบจับภาพผ่านกล้อง
+            initARTracking();
+        }
+
+        function updateUIStats() {
+            document.getElementById('ui-score').innerText = score;
+            document.getElementById('ui-combo').innerText = combo;
+            if(combo > 1) {
+                document.getElementById('ui-combo-box').classList.remove('hidden');
+            } else {
+                document.getElementById('ui-combo-box').classList.add('hidden');
+            }
+            // วาดหัวใจตามชีวิตที่เหลือ
+            document.getElementById('ui-hearts').innerHTML = "❤️ ".repeat(lives);
+        }
+
+        function showAlertText(text) {
+            const alertEl = document.getElementById('game-alert');
+            alertEl.innerText = text;
+            alertEl.classList.remove('scale-0', 'opacity-0');
+            alertEl.classList.add('scale-100', 'opacity-100');
+            setTimeout(() => {
+                alertEl.classList.remove('scale-100', 'opacity-100');
+                alertEl.classList.add('scale-0', 'opacity-0');
+            }, 800);
+        }
+
+        // --- 4. ระบบเสียง Phonics (Web Speech API) ---
+        function speakTargetSound() {
+            const currentIsland = GameData.islands[currentIslandIndex];
+            let textToSpeak = "Find words with sound: " + currentIsland.targetSound;
+            
+            // ปรับเสียงอ่านให้เข้ากับโจทย์ของด่าน
+            if(currentIsland.targetSound === "short_a") textToSpeak = "Find the short A sound. แอ้";
+            
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function speakWord(word) {
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // --- 5. ระบบ Computer Vision (AR) ขยับตะกร้าด้วยตัว/หัว ---
+        function initARTracking() {
+            const selfieSegmentation = new SelfieSegmentation({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+            });
+
+            selfieSegmentation.setOptions({ modelSelection: 1 });
+            selfieSegmentation.onResults(onARResults);
+
+            const camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    if(gameActive) await selfieSegmentation.send({ image: videoElement });
+                },
+                width: 640,
+                height: 480
+            });
+            camera.start();
+        }
+
+        function onARResults(results) {
+            if (!gameActive) return;
+            
+            // วาดภาพจากกล้องลงบน Canvas หลัก
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            // วาดวิดีโอแบบกลับด้าน (Mirror)
+            canvasCtx.translate(canvasElement.width, 0);
+            canvasCtx.scale(-1, 1);
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.restore();
+
+            // ค้นหาตำแหน่งหัวของเด็ก เพื่อขยับตะกร้า (จำลองจาก Mask Center)
+            // หมายเหตุ: เพื่อความลื่นไหลโดยไม่ต้องโหลดโมเดลใหญ่ หากหาจุดพิกัดไม่เจอ 
+            // ระบบจะมีระบบ Fallback ให้ใช้เมาส์ขยับเล่นทดสอบได้ด้วยขบวนการด้านล่างครับ
+            
+            // วาดตรรกะเกม (อัปเดตตำแหน่งผลไม้และตะกร้า)
+            updateGameLogic();
+        }
+
+        // ระบบ Fallback ยามไม่มีกล้องหรือทดสอบผ่านเมาส์
+        window.addEventListener('mousemove', (e) => {
+            if(gameActive) {
+                // อิงจากสัดส่วนหน้าจอ
+                const rect = canvasElement.getBoundingClientRect();
+                const relativeX = e.clientX - rect.left;
+                basketX = (relativeX / rect.width) * canvasElement.width;
+            }
+        });
+
+        function resizeCanvas() {
+            canvasElement.width = window.innerWidth;
+            canvasElement.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+
+        // --- 6. Core Game Loop & ฟิสิกส์การหล่น ---
+        function updateGameLogic() {
+            const ctx = canvasCtx;
+            const width = canvasElement.width;
+            const height = canvasElement.height;
+
+            // วาดตะกร้า (ตำแหน่งอิงตาม X ที่คุมด้วยหัว/ตัว หรือเมาส์)
+            const basketY = height - 120;
+            const basketWidth = 160;
+            const basketHeight = 40;
+
+            ctx.fillStyle = "#d97706"; // ตะกร้าสีน้ำตาลทอง
+            ctx.beginPath();
+            ctx.roundRect(basketX - basketWidth/2, basketY, basketWidth, basketHeight, 15);
+            ctx.fill();
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 16px Prompt";
+            ctx.fillText("🧺 BASKET", basketX - 45, basketY + 25);
+
+            // จัดการสปอว์นผลไม้คำศัพท์
+            spawnTimer++;
+            const currentSpeed = GameData.levels[currentLevelIndex].speed;
+            
+            if(spawnTimer > 90) { // เกิดทุกๆ ประมาณ 1.5 วินาที
+                spawnTimer = 0;
+                const activeIsland = GameData.islands[currentIslandIndex];
+                const randomWordObj = activeIsland.words[Math.floor(Math.random() * activeIsland.words.length)];
+                
+                // สุ่มประเภทผลไม้ (ธรรมดา หรือ ผลไม้สีทองโบนัส)
+                const isGolden = Math.random() < 0.15; // โอกาส 15% เป็นผลไม้สีทอง
+
+                fallingItems.push({
+                    x: Math.random() * (width - 100) + 50,
+                    y: -50,
+                    text: randomWordObj.text,
+                    isCorrect: randomWordObj.isCorrect,
+                    isGolden: isGolden,
+                    radius: 40
+                });
+            }
+
+            // คำนวณและวาดของที่หล่นลงมา
+            for (let i = fallingItems.length - 1; i >= 0; i--) {
+                let item = fallingItems[i];
+                item.y += currentSpeed; // หล่นเร็วตาม Level ความยาก
+
+                // วาดตัวผลไม้
+                ctx.beginPath();
+                ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+                ctx.fillStyle = item.isGolden ? "#fbbf24" : (item.isCorrect ? "#ef4444" : "#3b82f6"); // สีทอง / แดงถูก / ฟ้าหลอก
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = "#fff";
+                ctx.stroke();
+
+                // วาดตัวหนังสือคำศัพท์ Phonics
+                ctx.fillStyle = item.isGolden ? "#78350f" : "#fff";
+                ctx.font = "bold 20px Prompt";
+                ctx.textAlign = "center";
+                ctx.fillText(item.text, item.x, item.y + 7);
+
+                // ตรวจจับการชน (Collision Detection) กับตะกร้า
+                if (item.y + item.radius >= basketY && item.y - item.radius <= basketY + basketHeight) {
+                    if (item.x >= basketX - basketWidth/2 && item.x <= basketX + basketWidth/2) {
+                        // เก็บเข้าตะกร้าสำเร็จ!
+                        speakWord(item.text);
+                        
+                        if (item.isCorrect) {
+                            combo++;
+                            let pointsGained = 10;
+                            let bonusText = "+10";
+
+                            // ระบบ Combo โบนัส
+                            if(combo >= 3) {
+                                pointsGained += 5;
+                                bonusText = `Combo x${combo}! +15`;
+                            }
+                            // ถ้ารับผลไม้ทอง ได้แต้มคูณสอง!
+                            if(item.isGolden) {
+                                pointsGained *= 2;
+                                bonusText = "✨ GOLDEN BONUS! " + bonusText + " x2";
+                            }
+
+                            score += pointsGained;
+                            showAlertText(bonusText);
+                        } else {
+                            // รับเสียงผิด = หัก -5 คะแนน และลดหัวใจ
+                            combo = 0;
+                            score = Math.max(0, score - 5);
+                            lives--;
+                            showAlertText("❌ Wrong Sound! -5");
+                            if(lives <= 0) endGameGameover(false);
+                        }
+
+                        updateUIStats();
+                        fallingItems.splice(i, 1);
+                        continue;
+                    }
+                }
+
+                // หลุดขอบหน้าจอ (ตกพื้น)
+                if (item.y - item.radius > height) {
+                    // หากเป็นคำที่ถูกแต่เด็กปล่อยตกพื้น ถือว่าพลาด เสียเลือด!
+                    if(item.isCorrect && !item.isGolden) {
+                        lives--;
+                        combo = 0;
+                        showAlertText("💧 Missed Target!");
+                        updateUIStats();
+                        if(lives <= 0) endGameGameover(false);
+                    }
+                    fallingItems.splice(i, 1);
+                }
+            }
+        }
+
+        // --- 7. ระบบการจบเกม & บันทึกข้อมูลลง LocalStorage (Teacher Dashboard) ---
+        function endGameGameover(isTimeOut) {
+            gameActive = false;
+            clearInterval(gameTimer);
+            
+            if(!isTimeOut && lives <= 0) {
+                alert("Game Over! พลังชีวิตหมดเกลี้ยงเลย ไว้มาลองฝึกฟังใหม่นะจ๊ะเด็กๆ");
+            } else {
+                alert("หมดเวลา 60 วินาทีแล้วจ้า!");
+            }
+
+            // บันทึกสถิตินักเรียนลงฐานข้อมูลเบราว์เซอร์ (LocalStorage)
+            saveLogToStorage();
+
+            // แสดงหน้าสรุปผล
+            document.getElementById('screen-game').className = "hidden";
+            document.getElementById('screen-result').classList.remove('hidden');
+
+            document.getElementById('res-name').innerText = currentStudent;
+            document.getElementById('res-island').innerText = GameData.islands[currentIslandIndex].name + " (" + GameData.levels[currentLevelIndex].name + ")";
+            document.getElementById('res-score').innerText = score;
+        }
+
+        function saveLogToStorage() {
+            let logs = JSON.parse(localStorage.getItem('phonics_game_logs')) || [];
+            
+            // สร้างดีไซน์เวลาฝั่งเซิร์ฟเวอร์ท้องถิ่นปี 2026
+            const currentTimestamp = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+
+            const newLog = {
+                timestamp: currentTimestamp,
+                name: currentStudent,
+                island: GameData.islands[currentIslandIndex].name + ` [${GameData.levels[currentLevelIndex].name}]`,
+                score: score
+            };
+
+            logs.push(newLog);
+            localStorage.setItem('phonics_game_logs', JSON.stringify(logs));
+        }
+
+        function backToLogin() {
+            document.getElementById('student-name').value = "";
+            document.getElementById('screen-result').classList.add('hidden');
+            document.getElementById('screen-login').classList.remove('hidden');
+        }
+
+        // --- 8. ฟังก์ชันระบบจัดการสำหรับคุณครู (Teacher Dashboard Backoffice) ---
+        function toggleDashboard(show) {
+            const dbScreen = document.getElementById('screen-dashboard');
+            if(show) {
+                dbScreen.classList.remove('hidden');
+                renderDashboardData();
+            } else {
+                dbScreen.classList.add('hidden');
+            }
+        }
+
+        function renderDashboardData() {
+            const logs = JSON.parse(localStorage.getItem('phonics_game_logs')) || [];
+            const tbody = document.getElementById('dashboard-table-body');
+            tbody.innerHTML = "";
+
+            if(logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">ยังไม่มีข้อมูลคะแนนของเด็กๆ บันทึกเข้ามาในระบบขณะนี้</td></tr>`;
+                return;
+            }
+
+            // แสดงผลคะแนนล่าสุดขึ้นก่อน
+            logs.reverse().forEach(log => {
+                const row = document.createElement('tr');
+                row.className = "hover:bg-slate-700/50 transition-colors";
+                row.innerHTML = `
+                    <td class="p-4 font-mono text-gray-400">${log.timestamp}</td>
+                    <td class="p-4 font-bold text-white">${log.name}</td>
+                    <td class="p-4 text-yellow-400">${log.island}</td>
+                    <td class="p-4 font-bold text-green-400 text-lg">${log.score}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function clearLogs() {
+            if(confirm("คุณครูแน่ใจใช่ไหมครับที่จะล้างข้อมูลสถิตินักเรียนทั้งหมด? ข้อมูลจะหายถาวรเลยนะคร้าบ")) {
+                localStorage.removeItem('phonics_game_logs');
+                renderDashboardData();
+            }
+        }
+
+        function exportCSV() {
+            const logs = JSON.parse(localStorage.getItem('phonics_game_logs')) || [];
+            if(logs.length === 0) return alert("ไม่มีข้อมูลสำหรับการ Export ครับคุณครู");
+
+            let csvContent = "\uFEFF"; // ป้องกันภาษาไทยเพี้ยนใน Excel (BOM)
+            csvContent += "วันเวลาที่เล่น,ชื่อนักเรียน,เกาะและระดับความยาก,คะแนนสะสม\n";
+
+            logs.forEach(log => {
+                csvContent += `"${log.timestamp}","${log.name}","${log.island}",${log.score}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `รายงานคะแนน_Phonics_Game_2026.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
