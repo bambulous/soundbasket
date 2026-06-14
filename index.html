@@ -32,8 +32,13 @@
     </div>
 
     <div id="screen-select" class="hidden flex flex-col items-center justify-center h-full p-4 overflow-y-auto">
-        <div class="bg-white text-slate-800 p-8 rounded-3xl shadow-2xl max-w-2xl w-full text-center border-4 border-indigo-500">
-            <h2 class="text-3xl font-bold text-indigo-600 mb-6">🏝️ เลือกเกาะและระดับความยาก 🌋</h2>
+        <div class="bg-white text-slate-800 p-8 rounded-3xl shadow-2xl max-w-2xl w-full text-center border-4 border-indigo-500 relative">
+            
+            <button onclick="backToLogin()" class="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-3 py-1.5 rounded-xl text-sm transition-all">
+                ⬅ กลับหน้าแรก
+            </button>
+
+            <h2 class="text-3xl font-bold text-indigo-600 mb-6 mt-6">🏝️ เลือกเกาะและระดับความยาก 🌋</h2>
             
             <div class="text-left mb-6">
                 <label class="block text-gray-700 font-bold mb-2 text-lg">1. เลือกเกาะ Phonics ที่ต้องการผจญภัย:</label>
@@ -51,16 +56,16 @@
             </div>
 
             <div class="text-left mb-8">
-                <label class="block text-gray-700 font-bold mb-2 text-lg">2. เลือกระดับความเร็วในการหล่น (Level):</label>
+                <label class="block text-gray-700 font-bold mb-2 text-lg">2. เลือกระดับความยาก (ความเร็ว & คะแนนคูณเพิ่ม):</label>
                 <div class="grid grid-cols-3 gap-3">
                     <button id="btn-level-0" onclick="selectLevel(0)" class="p-3 border-2 border-green-500 bg-green-50 text-green-700 font-bold rounded-xl text-center transition-all hover:bg-green-100">
-                        🟢 Easy<br><span class="text-xs font-medium">หล่นช้า</span>
+                        🟢 Easy<br><span class="text-xs font-medium">หล่นช้า (คะแนน x1.0)</span>
                     </button>
                     <button id="btn-level-1" onclick="selectLevel(1)" class="p-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl text-center transition-all hover:bg-gray-50">
-                        🟡 Medium<br><span class="text-xs font-medium">หล่นปานกลาง</span>
+                        🟡 Medium<br><span class="text-xs font-medium">หล่นปานกลาง (คะแนน x1.5)</span>
                     </button>
                     <button id="btn-level-2" onclick="selectLevel(2)" class="p-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl text-center transition-all hover:bg-gray-50">
-                        🔴 Hard<br><span class="text-xs font-medium">หล่นไว</span>
+                        🔴 Hard<br><span class="text-xs font-bold">หล่นเร็ว x1.5! (คะแนน x2.0)</span>
                     </button>
                 </div>
             </div>
@@ -78,10 +83,16 @@
         </div>
 
         <div class="absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-none">
-            <div class="bg-slate-900/80 backdrop-blur-md p-3 rounded-2xl flex flex-col pointer-events-auto">
-                <span id="ui-name" class="font-bold text-yellow-300 text-lg">Name</span>
-                <span id="ui-island" class="text-xs text-gray-300">Island: -</span>
-                <span id="ui-level" class="text-xs text-green-400 font-semibold">Level: -</span>
+            
+            <div class="flex items-center space-x-3 pointer-events-auto">
+                <button onclick="togglePauseGame()" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold p-3 rounded-2xl shadow-md transition-all text-xl" title="พักเกม">
+                    ⏸️
+                </button>
+                <div class="bg-slate-900/80 backdrop-blur-md p-3 rounded-2xl flex flex-col">
+                    <span id="ui-name" class="font-bold text-yellow-300 text-lg">Name</span>
+                    <span id="ui-island" class="text-xs text-gray-300">Island: -</span>
+                    <span id="ui-level" class="text-xs text-green-400 font-semibold">Level: -</span>
+                </div>
             </div>
 
             <div class="flex space-x-4 items-center">
@@ -107,6 +118,21 @@
             <span class="text-sm font-medium">🎯 คำที่มีเสียง:</span>
             <span id="ui-target-sound" class="text-2xl font-bold text-yellow-300">/ /</span>
             <span class="text-lg">🔊</span>
+        </div>
+
+        <div id="pause-overlay" class="hidden absolute inset-0 bg-slate-900/80 backdrop-blur-md flex flex-col items-center justify-center z-40">
+            <div class="bg-white text-slate-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center border-4 border-yellow-500 animate-fade-in">
+                <h3 class="text-3xl font-bold text-indigo-600 mb-2">⏸️ เกมกำลังหยุดพัก</h3>
+                <p class="text-gray-500 mb-6">เหนื่อยไหม พักหายใจแล้วลุยกันต่อ!</p>
+                <div class="space-y-3">
+                    <button onclick="togglePauseGame()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold text-lg py-3 rounded-xl shadow-md transition-all">
+                        ▶️ เล่นเกมต่อ (Resume)
+                    </button>
+                    <button onclick="exitGameToHome()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold text-lg py-3 rounded-xl shadow-md transition-all">
+                        🚪 ออกไปหน้าหลัก (Exit)
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div id="game-alert" class="absolute top-1/3 left-1/2 transform -translate-x-1/2 text-4xl font-bold text-yellow-400 drop-shadow-lg pointer-events-none transition-all scale-0 opacity-0 z-10"></div>
@@ -213,14 +239,14 @@
                     ]
                 }
             ],
+            // 🚀 อัปเดตความเร็วโหมด Hard ให้เร่งขึ้น 1.5 เท่า (จากเดิม 4.5 เป็น 6.75) และบันทึกคะแนนตัวคูณ (scoreMultiplier)
             levels: [
-                { name: "Easy", speed: 1.5 },
-                { name: "Medium", speed: 3 },
-                { name: "Hard", speed: 4.5 }
+                { name: "Easy", speed: 1.5, scoreMultiplier: 1.0 },
+                { name: "Medium", speed: 3.0, scoreMultiplier: 1.5 },
+                { name: "Hard", speed: 6.75, scoreMultiplier: 2.0 }
             ]
         };
 
-        // อาเรย์เก็บสีแบบสุ่มสำหรับพรางตาคำตอบ (ส้ม, แดง, เขียว, ฟ้า, ชมพู)
         const fruitColors = ["#f97316", "#ef4444", "#22c55e", "#06b6d4", "#ec4899"];
 
         let currentStudent = "";
@@ -233,6 +259,7 @@
         let lives = 3;
         let gameTimer = null;
         let gameActive = false;
+        let isGamePaused = false; // ตัวแปรสถานะหยุดพักเกม
         let isARInitialized = false;
 
         const videoElement = document.getElementById('webcam');
@@ -252,8 +279,8 @@
             document.getElementById('screen-login').classList.add('hidden');
             document.getElementById('screen-select').classList.remove('hidden');
             
-            selectIsland(0);
-            selectLevel(0);
+            selectIsland(currentIslandIndex);
+            selectLevel(currentLevelIndex);
         }
 
         function selectIsland(index) {
@@ -292,14 +319,19 @@
 
             score = 0; combo = 0; timeRemaining = 60; lives = 3;
             fallingItems = [];
+            isGamePaused = false;
+            document.getElementById('pause-overlay').classList.add('hidden');
             updateUIStats();
 
             resizeCanvas();
             gameActive = true;
             speakTargetSound();
 
+            // เคลียร์ Timer ตัวเก่ากันซ้อนกัน
+            if(gameTimer) clearInterval(gameTimer);
+            
             gameTimer = setInterval(() => {
-                if(!gameActive) return;
+                if(!gameActive || isGamePaused) return; // หากกดหยุดพัก เวลาจะไม่ถูกหักลดลง
                 timeRemaining--;
                 document.getElementById('ui-time').innerText = timeRemaining;
                 if(timeRemaining <= 0) endGameGameover(true);
@@ -311,8 +343,32 @@
             }
         }
 
+        // ฟังก์ชันกดปุ่มเปิด/ปิดสลับหน้าต่าง Pause
+        function togglePauseGame() {
+            if(!gameActive) return;
+            isGamePaused = !isGamePaused;
+            
+            const pauseOverlay = document.getElementById('pause-overlay');
+            if(isGamePaused) {
+                pauseOverlay.classList.remove('hidden');
+            } else {
+                pauseOverlay.classList.add('hidden');
+            }
+        }
+
+        // ฟังก์ชันยอมแพ้ ออกจากเกมกลางคันเพื่อกลับไปหน้าเลือกด่าน/หน้าหลัก
+        function exitGameToHome() {
+            gameActive = false;
+            isGamePaused = false;
+            clearInterval(gameTimer);
+            document.getElementById('pause-overlay').classList.add('hidden');
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-login').classList.remove('hidden');
+            document.getElementById('student-name').value = "";
+        }
+
         function updateUIStats() {
-            document.getElementById('ui-score').innerText = score;
+            document.getElementById('ui-score').innerText = Math.floor(score);
             document.getElementById('ui-combo').innerText = combo;
             if(combo > 1) {
                 document.getElementById('ui-combo-box').classList.remove('hidden');
@@ -334,6 +390,7 @@
         }
 
         function speakTargetSound() {
+            if(isGamePaused) return;
             const currentIsland = GameData.islands[currentIslandIndex];
             let textToSpeak = "Find words with sound: " + currentIsland.targetSound;
             if(currentIsland.targetSound === "short_a") textToSpeak = "Find the short A sound. แอ้";
@@ -383,7 +440,8 @@
             canvasCtx.scale(-1, 1);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
-            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+            // ถ้าไม่ได้อยู่ในสเตตัส Pause ให้ขยับตะกร้าตามหัวปกติ
+            if (!isGamePaused && results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 const landmarks = results.multiFaceLandmarks[0];
                 const headPoint = landmarks[9]; 
 
@@ -396,7 +454,7 @@
         }
 
         window.addEventListener('mousemove', (e) => {
-            if(gameActive && (!videoElement.srcObject)) {
+            if(gameActive && !isGamePaused && (!videoElement.srcObject)) {
                 const rect = canvasElement.getBoundingClientRect();
                 basketX = ((e.clientX - rect.left) / rect.width) * canvasElement.width;
                 basketY = ((e.clientY - rect.top) / rect.height) * canvasElement.height;
@@ -414,6 +472,7 @@
             const width = canvasElement.width;
             const height = canvasElement.height;
 
+            // วาดจุดนีออนนำสายตาและวาดตะกร้า
             ctx.beginPath();
             ctx.arc(width - basketX, basketY, 15, 0, Math.PI * 2); 
             ctx.fillStyle = "#00ffcc";
@@ -436,16 +495,32 @@
             ctx.textAlign = "center";
             ctx.fillText("🧺 BASKET", actualBasketX, actualBasketY + 5);
 
+            // ⏸️ คุมกลไกเบรกทั้งหมดถ้าเกมสั่ง Pause อยู่ (ไม่เพิ่มของ ไม่ขยับของ)
+            if(isGamePaused) {
+                // วาดวัตถุค้างไว้ที่พิกัดเดิมเพื่อความต่อเนื่องนุ่มนวล
+                for (let item of fallingItems) {
+                    ctx.beginPath();
+                    ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = item.isGolden ? "#fbbf24" : item.color;
+                    ctx.fill();
+                    ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+                    ctx.fillStyle = item.isGolden ? "#78350f" : "#fff";
+                    ctx.font = "bold 18px Prompt"; ctx.textAlign = "center";
+                    ctx.fillText(item.text, item.x, item.y + 6);
+                }
+                return; 
+            }
+
+            // ถ้ารันเกมปกติให้เกิดหัวข้อและผลไม้หล่นต่อ
             spawnTimer++;
             const currentSpeed = GameData.levels[currentLevelIndex].speed;
+            const currentMultiplier = GameData.levels[currentLevelIndex].scoreMultiplier;
             
             if(spawnTimer > 70) {
                 spawnTimer = 0;
                 const activeIsland = GameData.islands[currentIslandIndex];
                 const randomWordObj = activeIsland.words[Math.floor(Math.random() * activeIsland.words.length)];
                 const isGolden = Math.random() < 0.15;
-                
-                // สุ่มสีพรางตาจากกล่องสีที่เตรียมไว้
                 const randomVisualColor = fruitColors[Math.floor(Math.random() * fruitColors.length)];
 
                 fallingItems.push({
@@ -454,7 +529,7 @@
                     text: randomWordObj.text,
                     isCorrect: randomWordObj.isCorrect,
                     isGolden: isGolden,
-                    color: randomVisualColor, // ผูกสีที่ได้จากการสุ่มพรางตา
+                    color: randomVisualColor,
                     radius: 45
                 });
             }
@@ -465,10 +540,7 @@
 
                 ctx.beginPath();
                 ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
-                
-                // ตรรกะลงสีใหม่: ถ้าเป็นลูกทองจะแสดงสีเหลืองทองเหมือนเดิม แต่ถ้าเป็นลูกปกติจะใช้สีที่สุ่มพรางตาปะปนกัน (ไม่แบ่งแยกถูกผิดแล้ว)
                 ctx.fillStyle = item.isGolden ? "#fbbf24" : item.color;
-                
                 ctx.fill();
                 ctx.lineWidth = 3;
                 ctx.strokeStyle = "#fff";
@@ -488,19 +560,21 @@
                     
                     if (item.isCorrect) {
                         combo++;
-                        let points = 10;
-                        let msg = "+10";
+                        // ⭐️ คำนวณตามสูตรคะแนนฐานคูณตัวคูณเลเวลด่านที่ครูสั่งปรับปรุงใหม่ครับ
+                        let basePoints = 10 * currentMultiplier; 
+                        let bonusPoints = 0;
 
-                        if(combo >= 3) { points += 5; msg = `Combo x${combo}! +15`; }
-                        if(item.isGolden) { points *= 2; msg = "✨ GOLDEN! " + msg + " x2"; }
+                        if(combo >= 3) { bonusPoints = 5 * currentMultiplier; }
+                        let pointsGained = basePoints + bonusPoints;
+                        if(item.isGolden) { pointsGained *= 2; }
 
-                        score += points;
-                        showAlertText(msg);
+                        score += pointsGained;
+                        showAlertText(`+${pointsGained} คะแนน! ${combo >= 3 ? '🔥 Combo!' : ''}`);
                     } else {
                         combo = 0;
-                        score = Math.max(0, score - 5);
+                        score = Math.max(0, score - (5 * currentMultiplier));
                         lives--;
-                        showAlertText("❌ ผิดเสียง! -5");
+                        showAlertText(`❌ ผิดเสียง! -${5 * currentMultiplier}`);
                         if(lives <= 0) endGameGameover(false);
                     }
 
@@ -539,7 +613,7 @@
 
             document.getElementById('res-name').innerText = currentStudent;
             document.getElementById('res-island').innerText = GameData.islands[currentIslandIndex].name + " (" + GameData.levels[currentLevelIndex].name + ")";
-            document.getElementById('res-score').innerText = score;
+            document.getElementById('res-score').innerText = Math.floor(score);
         }
 
         function saveLogToStorage() {
@@ -550,7 +624,7 @@
                 timestamp: currentTimestamp,
                 name: currentStudent,
                 island: GameData.islands[currentIslandIndex].name + ` [${GameData.levels[currentLevelIndex].name}]`,
-                score: score
+                score: Math.floor(score)
             };
 
             logs.push(newLog);
@@ -558,9 +632,10 @@
         }
 
         function backToLogin() {
-            document.getElementById('student-name').value = "";
+            document.getElementById('screen-select').classList.add('hidden');
             document.getElementById('screen-result').classList.add('hidden');
             document.getElementById('screen-login').classList.remove('hidden');
+            document.getElementById('student-name').value = "";
         }
 
         function toggleDashboard(show) {
